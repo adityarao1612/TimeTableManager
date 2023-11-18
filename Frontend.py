@@ -21,24 +21,6 @@ def authenticate(username, password):
     return result is not None
 
 
-# Function to display the admin dashboard
-# def admin_dashboard():
-#     st.title("Admin Dashboard")
-#     st.write("Welcome,", st.session_state.user[0])
-
-#     # Add buttons
-#     st.button("Edit Student")
-#     st.button("Edit Teacher")
-#     st.button("Edit Subject")
-#     st.button("Edit Room")
-#     st.button("Edit Timeslot")
-#     st.button("Edit Batch")
-
-
-#     if st.button("Logout", key="logout", on_click=lambda: st.session_state.rerun()):
-#         st.session_state.logged_in = False
-#         st.session_state.page = "Home"
-
 def admin_dashboard():
     st.title("Admin Dashboard")
     st.write("Welcome,", st.session_state.user[0])
@@ -286,14 +268,24 @@ def edit_batches():
 
 def view_timetable():
     st.title("View TimeTable")
-    uid = st.text_input("Enter Student ID or BatchID")
+
+    user_type = st.radio("Select User Type", ["Student", "Teacher"])
+
+    if user_type == "Teacher" :
+        uid = st.text_input("Enter Teacher ID ")
+
+    else:
+        uid = st.text_input("Enter Student ID or Batch")
+    
+    
     if uid:
         st.session_state.timetable_id = uid
+
     if st.session_state.timetable_id:
-        st.write("Timetable for ",
-                 st.session_state.timetable_id)
+        st.write("Timetable for ",st.session_state.timetable_id)
+
     # Modify the SQL query to include JOIN with the subjects table
-    if len(st.session_state.timetable_id) > 10:
+    if len(st.session_state.timetable_id) > 11:
         query = f"""
             SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname
             FROM timeslot t
@@ -301,6 +293,13 @@ def view_timetable():
             WHERE t.batch_id in
             (SELECT batchid from Student where studentid = '{st.session_state.timetable_id}')
         """
+
+    elif len(st.session_state.timetable_id) >9:
+
+        query = f'''select t.day, t.starttime, t.endtime, t.subjectcode, t.room_id
+                    teacherid , batchid,slot_id 
+                    from Teaches s natural join Timeslot t where teacherid = '{uid}'
+            '''
     else:
         query = f"""
             SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname
@@ -311,8 +310,9 @@ def view_timetable():
 
     cursor.execute(query)
     result = cursor.fetchall()
+    print (result)
 
-    if result:
+    if result and len(uid) >11:
         # Convert the result to a Pandas DataFrame
         df = pd.DataFrame(result, columns=[
                           'day', 'starttime', 'endtime', 'subjectcode', 'room_id', 'subjectname'])
@@ -334,6 +334,24 @@ def view_timetable():
 
         st.dataframe(timetable, hide_index=True)
         # st.data_editor(timetable, hide_index=True)
+    
+    elif result and len(uid)>9:
+        columns = ["day", "starttime", "endtime", "subjectcode", "room_id", "batchid", "slot_id"]
+        # Create a DataFrame
+        df = pd.DataFrame(result, columns=columns)
+
+        df['starttime'] = df['starttime'].astype(str)
+        df['endtime'] = df['endtime'].astype(str)
+
+        df['Timing'] = df['starttime'].str[-8:-3] + \
+            '-' + df['endtime'].str[-8:-3]
+
+        df.drop(columns=['starttime','endtime'], inplace=True)
+        df.sort_values(by='slot_id', inplace=True)
+
+
+        st.dataframe(df,hide_index=True)
+
     else:
         st.error("No entry found.")
 
@@ -410,7 +428,6 @@ def main():
         st.rerun()
 
     st.sidebar.button("View TimeTable", on_click=set_page, args=['timetable'])
-
 
 
 
