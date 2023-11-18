@@ -18,7 +18,6 @@ INSERT INTO Subject (subjectcode, subjectname, semester) VALUES
 
 
 
-
 INSERT INTO TEACHER values
 ('INSTRUCTOR1', 'INSTRUCTOR1', 'CS', 'INSTRUCTOR1@gmail.com'),
 ('INSTRUCTOR2', 'INSTRUCTOR2', 'CS', 'INSTRUCTOR2@gmail.com'),
@@ -109,18 +108,6 @@ INSERT INTO Timeslot (slot_id, room_id, batch_id, subjectcode, day, starttime, e
 (18, 'G01', '5A', 'UE21CS341A', 'Friday', '10:00:00', '11:30:00'),
 (19, 'G01', '5A', 'UE21CS352A', 'Friday', '12:30:00', '14:00:00'),
 (20, 'G01', '5A', 'UE21CS342A', 'Friday', '14:30:00', '16:00:00');
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
