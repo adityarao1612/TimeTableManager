@@ -23,8 +23,7 @@ cursor = conn.cursor()
 
 # check admin username and password:
 def authenticate(username, password):
-    query = f"SELECT * FROM admin WHERE username = '{
-        username}' AND password = '{password}'"
+    query = f"SELECT * FROM admin WHERE username = '{username}' AND password = '{password}'"
     cursor.execute(query)
     result = cursor.fetchone()
     return result is not None
@@ -135,8 +134,7 @@ def add_student():
 
     if st.button("Add Student"):
         try:
-            query = f"INSERT INTO Student VALUES ('{id}', '{name}', {semester}, '{
-                section}', '{batchid}')"
+            query = f"INSERT INTO Student VALUES ('{id}', '{name}', {semester}, '{section}', '{batchid}')"
             print("SQL Query:", query)
 
             cursor.execute(query)
@@ -171,8 +169,7 @@ def update_student():
     batchid = st.text_input("Batch ID")
 
     if st.button("Update Student"):
-        query = f"UPDATE Student SET studentname = '{
-            name}', batchid = '{batchid}' WHERE studentid = '{rollno}'"
+        query = f"UPDATE Student SET studentname = '{name}', batchid = '{batchid}' WHERE studentid = '{rollno}'"
         cursor.execute(query)
         conn.commit()
         st.success("Student updated successfully!")
