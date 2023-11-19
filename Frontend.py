@@ -4,18 +4,27 @@ import time
 import pandas as pd
 
 # Establish a connection to MySQL database
-conn = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="ajey@123",
-    database="timetablemanager"
-)
+try:
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="ajey@123",
+        database="timetablemanager"
+    )
+except:
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="adi1416",
+        database="timetablemanager"
+    )
 cursor = conn.cursor()
 
 
 # check admin username and password:
 def authenticate(username, password):
-    query = f"SELECT * FROM admin WHERE username = '{username}' AND password = '{password}'"
+    query = f"SELECT * FROM admin WHERE username = '{
+        username}' AND password = '{password}'"
     cursor.execute(query)
     result = cursor.fetchone()
     return result is not None
@@ -44,7 +53,8 @@ def admin_dashboard():
     st.write("Welcome,", st.session_state.user[0])
 
     # Add buttons
-    selected_option = st.radio("Select an option:", ["Edit Student", "Edit Teacher", "Edit Subject", "Edit Room", "Edit Timeslot", "Edit Batch","Generate timetable"])
+    selected_option = st.radio("Select an option:", [
+                               "Edit Student", "Edit Teacher", "Edit Subject", "Edit Room", "Edit Timeslot", "Edit Batch", "Generate timetable"])
 
     if selected_option == "Edit Student":
         edit_students()
@@ -63,14 +73,14 @@ def admin_dashboard():
 
     elif selected_option == "Edit Batch":
         edit_batches()
-    
+
     elif selected_option == "Generate timetable":
         generate_timetable()
 
-
-    if st.button("Logout", key="logout", on_click=lambda: st.session_state.rerun()):
+    if st.button("Logout", key="logout", on_click=lambda: st.rerun()):
         st.session_state.logged_in = False
-        st.session_state.page = "Home"
+        st.session_state.page = "admin_login"
+        st.rerun()
 
 
 def generate_timetable():
@@ -82,7 +92,8 @@ def edit_students():
     st.subheader("Edit Students")
 
     # Functionality Toggle Buttons
-    selected_option = st.radio("Select Action", ["Add Student", "Remove Student", "Update Student","View student details"])
+    selected_option = st.radio("Select Action", [
+                               "Add Student", "Remove Student", "Update Student", "View student details"])
 
     if selected_option == "Add Student":
         add_student()
@@ -105,11 +116,13 @@ def view_student():
 
         if result:
             # Create DataFrame directly
-            df = pd.DataFrame([result], columns=['studentid', 'studentname', 'semester', 'section', 'batchid'])
+            df = pd.DataFrame([result], columns=['studentid',
+                              'studentname', 'semester', 'section', 'batchid'])
             st.dataframe(df, hide_index=True)
 
         else:
             st.error("No entry found.")
+
 
 def add_student():
     st.title("Add Student")
@@ -122,7 +135,8 @@ def add_student():
 
     if st.button("Add Student"):
         try:
-            query = f"INSERT INTO Student VALUES ('{id}', '{name}', {semester}, '{section}', '{batchid}')"
+            query = f"INSERT INTO Student VALUES ('{id}', '{name}', {semester}, '{
+                section}', '{batchid}')"
             print("SQL Query:", query)
 
             cursor.execute(query)
@@ -138,15 +152,17 @@ def add_student():
         except Exception as e:
             st.error(f"An error occurred: {e}")
 
+
 def remove_student():
     st.title("Remove Student")
     rollno = st.text_input("SRN")
-    
+
     if st.button("Remove Student"):
         query = f"DELETE FROM Student WHERE studentid = '{rollno}'"
         cursor.execute(query)
         conn.commit()
         st.success("Student removed successfully!")
+
 
 def update_student():
     st.title("Update Student")
@@ -155,17 +171,14 @@ def update_student():
     batchid = st.text_input("Batch ID")
 
     if st.button("Update Student"):
-        query = f"UPDATE Student SET studentname = '{name}', batchid = '{batchid}' WHERE studentid = '{rollno}'"
+        query = f"UPDATE Student SET studentname = '{
+            name}', batchid = '{batchid}' WHERE studentid = '{rollno}'"
         cursor.execute(query)
         conn.commit()
         st.success("Student updated successfully!")
 
     # Add functionality to edit student information in the database
     # You can use st.text_input, st.button, and other Streamlit components to create the form
-
-    
-
-    
 
 
 def edit_teachers():
@@ -174,7 +187,8 @@ def edit_teachers():
     # Add functionality to edit teacher information in the database
     # You can use st.text_input, st.button, and other Streamlit components to create the form
 
-    operation = st.radio("Select Action", ["Add Teacher", "Remove Teacher", "Update Teacher","View teacher details"])
+    operation = st.radio("Select Action", [
+                         "Add Teacher", "Remove Teacher", "Update Teacher", "View teacher details"])
 
     if operation == "Add Teacher":
         add_teacher()
@@ -188,7 +202,7 @@ def edit_teachers():
 
 def add_teacher():
     st.title("Add Teacher")
-    
+
     name = st.text_input("Name")
     teacher_id = st.text_input("Teacher ID")
     department = st.text_input("Department")
@@ -210,6 +224,7 @@ def add_teacher():
         except Exception as e:
             st.error(f"An error occurred: {e}")
 
+
 def remove_teacher():
     st.title("Remove Teacher")
     teacher_id = st.text_input("Teacher ID")
@@ -223,6 +238,7 @@ def remove_teacher():
 
         except Exception as e:
             st.error(f"An error occurred: {e}")
+
 
 def update_teacher():
     st.title("Update Teacher")
@@ -242,6 +258,7 @@ def update_teacher():
         except Exception as e:
             st.error(f"An error occurred: {e}")
 
+
 def view_teacher():
     st.title("View Teacher Details")
     teacher_id = st.text_input("Teacher ID")
@@ -253,7 +270,8 @@ def view_teacher():
 
         if result:
             # Create DataFrame directly
-            df = pd.DataFrame([result], columns=['teacherid', 'name', 'dept', 'email'])
+            df = pd.DataFrame([result], columns=[
+                              'teacherid', 'name', 'dept', 'email'])
             st.dataframe(df, hide_index=True)
 
         else:
@@ -293,17 +311,26 @@ def view_timetable():
         st.write("Timetable for ",
                  st.session_state.timetable_id)
     # Modify the SQL query to include JOIN with the subjects table
-    if len(st.session_state.timetable_id) > 10:
+    if len(st.session_state.timetable_id) > 12:
         query = f"""
-            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname
+            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname,t.batch_id
             FROM timeslot t
             JOIN subject s ON t.subjectcode = s.subjectcode
             WHERE t.batch_id in
             (SELECT batchid from Student where studentid = '{st.session_state.timetable_id}')
         """
+
+    elif len(st.session_state.timetable_id) > 10:
+        query = f"""
+    SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname,t.batch_id
+    from (select * from timeslot natural join teaches where timeslot.subjectcode = teaches.subjectcode
+    and batchid = batch_id and teacherid='{st.session_state.timetable_id}')
+    as t natural join subject s where t.subjectcode = s.subjectcode;
+        """
+
     else:
         query = f"""
-            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname
+            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname,t.batch_id
             FROM timeslot t
             JOIN subject s ON t.subjectcode = s.subjectcode
             WHERE t.batch_id = '{st.session_state.timetable_id}'
@@ -315,7 +342,7 @@ def view_timetable():
     if result:
         # Convert the result to a Pandas DataFrame
         df = pd.DataFrame(result, columns=[
-                          'day', 'starttime', 'endtime', 'subjectcode', 'room_id', 'subjectname'])
+                          'day', 'starttime', 'endtime', 'subjectcode', 'room_id', 'subjectname', 'batchid'])
 
         # Display the DataFrame
         df['starttime'] = df['starttime'].astype(str)
@@ -326,14 +353,20 @@ def view_timetable():
         day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
         df['day'] = pd.Categorical(
             df['day'], categories=day_order, ordered=True)
-        df['alloted'] = df['subjectname'] + " [" + df['room_id'] + ']'
+
+        if len(st.session_state.timetable_id) == 11:
+            df['alloted'] = df['subjectname'] + \
+                " [" + df['room_id'] + ']'+'('+df['batchid']+')'
+        else:
+            df['alloted'] = df['subjectname'] + " [" + df['room_id'] + ']'
 
         timetable = df.pivot(index='day', columns='Timing', values='alloted')
         timetable = timetable.reset_index()
         # Increase row height using custom CSS
-
-        st.dataframe(timetable, hide_index=True)
-        # st.data_editor(timetable, hide_index=True)
+        if not st.session_state.logged_in:
+            st.dataframe(timetable, hide_index=True)
+        else:
+            st.data_editor(timetable, hide_index=True)
     else:
         st.error("No entry found.")
 
@@ -412,8 +445,5 @@ def main():
     st.sidebar.button("View TimeTable", on_click=set_page, args=['timetable'])
 
 
-
-
 if __name__ == "__main__":
     main()
-

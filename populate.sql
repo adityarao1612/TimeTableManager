@@ -8,15 +8,12 @@ INSERT INTO admin (username, password, role) VALUES
 ('Teacher2', 'Teacher3', 'teacher'),
 ('HOD1', 'HOD1', 'HOD');
 
-
 INSERT INTO Subject (subjectcode, subjectname, semester) VALUES
 ('UE21CS341A', 'Software Engineering',5),
 ('UE21CS351A', 'DBMS',5),
 ('UE21CS352A', 'Machine Intelligence',5),
 ('UE21CS342A', 'Data Analytics',5),
 ('UE21CS343A', 'Graph theory',5);
-
-
 
 INSERT INTO TEACHER values
 ('INSTRUCTOR1', 'INSTRUCTOR1', 'CS', 'INSTRUCTOR1@gmail.com'),
@@ -27,8 +24,6 @@ INSERT INTO TEACHER values
 ('INSTRUCTOR6', 'INSTRUCTOR6', 'CS', 'INSTRUCTOR6@gmail.com'),
 ('INSTRUCTOR7', 'INSTRUCTOR7', 'CS', 'INSTRUCTOR7@gmail.com');
 
-
-
 INSERT INTO Batch values
 ("5A"),
 ("5B"),
@@ -37,14 +32,12 @@ INSERT INTO Batch values
 ("5E"),
 ("5F");
 
-
 INSERT INTO Teaches (teacherid, subjectcode, batchid) VALUES
 ('INSTRUCTOR1', 'UE21CS351A', '5A'),
 ('INSTRUCTOR1', 'UE21CS351A', '5B'),
 ('INSTRUCTOR2', 'UE21CS351A', '5C'),
 ('INSTRUCTOR3', 'UE21CS351A', '5D'),
 ('INSTRUCTOR4', 'UE21CS351A', '5E');
-
 
 INSERT INTO Teaches (teacherid, subjectcode, batchid) VALUES
 ('INSTRUCTOR5', 'UE21CS342A', '5A'),
@@ -60,14 +53,12 @@ INSERT INTO Teaches (teacherid, subjectcode, batchid) VALUES
 ('INSTRUCTOR3', 'UE21CS343A', '5D'),
 ('INSTRUCTOR2', 'UE21CS343A', '5E');
 
-
 INSERT INTO Teaches (teacherid, subjectcode, batchid) VALUES
 ('INSTRUCTOR4', 'UE21CS352A', '5A'),
 ('INSTRUCTOR3', 'UE21CS352A', '5B'),
 ('INSTRUCTOR2', 'UE21CS352A', '5C'),
 ('INSTRUCTOR6', 'UE21CS352A', '5D'),
 ('INSTRUCTOR1', 'UE21CS352A', '5E');
-
 
 INSERT INTO Teaches (teacherid, subjectcode, batchid) VALUES
 ('INSTRUCTOR2', 'UE21CS341A', '5A'),
@@ -76,14 +67,12 @@ INSERT INTO Teaches (teacherid, subjectcode, batchid) VALUES
 ('INSTRUCTOR5', 'UE21CS341A', '5D'),
 ('INSTRUCTOR4', 'UE21CS341A', '5E');
 
-
 INSERT INTO Classroom (room_id, capacity) VALUES
 ('G01', 45),
 ('G02', 45),
 ('G03', 45),
 ('G04', 45),
 ('G05', 45);
-
 
 INSERT INTO Timeslot (slot_id, room_id, batch_id, subjectcode, day, starttime, endtime) VALUES
 (1, 'G01', '5A', 'UE21CS341A', 'Monday', '08:00:00', '09:30:00'),
@@ -95,9 +84,7 @@ INSERT INTO Timeslot (slot_id, room_id, batch_id, subjectcode, day, starttime, e
 (7, 'G01', '5A', 'UE21CS341A', 'Tuesday', '12:30:00', '14:00:00'),
 (8, 'G01', '5A', 'UE21CS352A', 'Tuesday', '14:30:00', '16:00:00'),
 (9, 'G01', '5A', 'UE21CS343A', 'Wednesday', '08:00:00', '09:30:00'),
-(10, 'G01', '5A', 'UE21CS351A', 'Wednesday', '10:00:00', '11:30:00');
-
-INSERT INTO Timeslot (slot_id, room_id, batch_id, subjectcode, day, starttime, endtime) VALUES
+(10, 'G01', '5A', 'UE21CS351A', 'Wednesday', '10:00:00', '11:30:00'),
 (11, 'G01', '5A', 'UE21CS352A', 'Wednesday', '12:30:00', '14:00:00'),
 (12, 'G01', '5A', 'UE21CS342A', 'Wednesday', '14:30:00', '16:00:00'),
 (13, 'G01', '5A', 'UE21CS341A', 'Thursday', '08:00:00', '09:30:00'),
@@ -109,11 +96,27 @@ INSERT INTO Timeslot (slot_id, room_id, batch_id, subjectcode, day, starttime, e
 (19, 'G01', '5A', 'UE21CS352A', 'Friday', '12:30:00', '14:00:00'),
 (20, 'G01', '5A', 'UE21CS342A', 'Friday', '14:30:00', '16:00:00');
 
-
-
-
-
-
+INSERT INTO Timeslot (slot_id, room_id, batch_id, subjectcode, day, starttime, endtime) VALUES
+(21, 'G02', '5B', 'UE21CS342A', 'Monday', '08:00:00', '09:30:00'),
+(22, 'G02', '5B', 'UE21CS341A', 'Monday', '10:00:00', '11:30:00'),
+(23, 'G02', '5B', 'UE21CS352A', 'Monday', '12:30:00', '14:00:00'),
+(24, 'G02', '5B', 'UE21CS351A', 'Monday', '14:30:00', '16:00:00'),
+(25, 'G02', '5B', 'UE21CS341A', 'Tuesday', '08:00:00', '09:30:00'),
+(26, 'G02', '5B', 'UE21CS352A', 'Tuesday', '10:00:00', '11:30:00'),
+(27, 'G02', '5B', 'UE21CS342A', 'Tuesday', '12:30:00', '14:00:00'),
+(28, 'G02', '5B', 'UE21CS351A', 'Tuesday', '14:30:00', '16:00:00'),
+(29, 'G02', '5B', 'UE21CS341A', 'Wednesday', '08:00:00', '09:30:00'),
+(30, 'G02', '5B', 'UE21CS352A', 'Wednesday', '10:00:00', '11:30:00'),
+(31, 'G02', '5B', 'UE21CS351A', 'Wednesday', '12:30:00', '14:00:00'),
+(32, 'G02', '5B', 'UE21CS343A', 'Wednesday', '14:30:00', '16:00:00'),
+(33, 'G02', '5B', 'UE21CS342A', 'Thursday', '08:00:00', '09:30:00'),
+(34, 'G02', '5B', 'UE21CS352A', 'Thursday', '10:00:00', '11:30:00'),
+(35, 'G02', '5B', 'UE21CS343A', 'Thursday', '12:30:00', '14:00:00'),
+(36, 'G02', '5B', 'UE21CS351A', 'Thursday', '14:30:00', '16:00:00'),
+(37, 'G02', '5B', 'UE21CS352A', 'Friday', '08:00:00', '09:30:00'),
+(38, 'G02', '5B', 'UE21CS342A', 'Friday', '10:00:00', '11:30:00'),
+(39, 'G02', '5B', 'UE21CS351A', 'Friday', '12:30:00', '14:00:00'),
+(40, 'G02', '5B', 'UE21CS343A', 'Friday', '14:30:00', '16:00:00');
 
 
 INSERT INTO Student values
