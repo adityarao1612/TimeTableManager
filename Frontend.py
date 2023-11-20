@@ -29,24 +29,6 @@ def authenticate(username, password):
     return result is not None
 
 
-# Function to display the admin dashboard
-# def admin_dashboard():
-#     st.title("Admin Dashboard")
-#     st.write("Welcome,", st.session_state.user[0])
-
-#     # Add buttons
-#     st.button("Edit Student")
-#     st.button("Edit Teacher")
-#     st.button("Edit Subject")
-#     st.button("Edit Room")
-#     st.button("Edit Timeslot")
-#     st.button("Edit Batch")
-
-
-#     if st.button("Logout", key="logout", on_click=lambda: st.session_state.rerun()):
-#         st.session_state.logged_in = False
-#         st.session_state.page = "Home"
-
 def admin_dashboard():
     st.title("Admin Dashboard")
     st.write("Welcome,", st.session_state.user[0])
@@ -64,14 +46,6 @@ def admin_dashboard():
     elif selected_option == "Edit Subject":
         edit_subjects()
 
-    elif selected_option == "Edit Room":
-        edit_rooms()
-
-    elif selected_option == "Edit Timeslot":
-        edit_timeslots()
-
-    elif selected_option == "Edit Batch":
-        edit_batches()
 
     elif selected_option == "Generate timetable":
         generate_timetable()
@@ -185,7 +159,7 @@ def edit_teachers():
     # You can use st.text_input, st.button, and other Streamlit components to create the form
 
     operation = st.radio("Select Action", [
-                         "Add Teacher", "Remove Teacher", "Update Teacher", "View teacher details"])
+                         "Add Teacher", "Remove Teacher", "Update Teacher", "View teacher details","leave"])
 
     if operation == "Add Teacher":
         add_teacher()
@@ -195,6 +169,91 @@ def edit_teachers():
         update_teacher()
     elif operation == "View teacher details":
         view_teacher()
+    elif operation == "leave":
+        leave()
+
+
+def leave():
+    st.title("Leave")
+    teacher_id = st.text_input("Teacher ID")
+    days = [
+        "Monday", 
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday"
+    ]
+    wday = st.selectbox("which day you are taking leave?", days)
+
+
+
+    # Query to get the classes taught by the teacher
+    classes_query = f"""
+    SELECT DISTINCT t.batchid
+    FROM Teaches t
+    WHERE t.teacherid = '{teacher_id}';
+    """
+
+    cursor.execute(classes_query)
+    teacher_classes = cursor.fetchall()
+
+    if not teacher_classes:
+        st.warning("No classes found for the given teacher.")
+        return
+    
+    for selected_class in [cls[0] for cls in teacher_classes]:
+        # Query to get the time slots for the selected class on the specified day
+        timeslots_query = f"""
+        SELECT slot_id, room_id, batch_id, subjectcode, day, starttime, endtime
+        FROM Timeslot
+        WHERE batch_id = '{selected_class}';
+        """
+        cursor.execute(timeslots_query)
+        class_timeslots = cursor.fetchall()
+
+        if not class_timeslots:
+            st.warning(f"No time slots found for {selected_class} on {day}.")
+            continue
+
+        # Add the selected time slots to the 'UpdatedTables' table
+        for slot_id, room_id, batch_id, subjectcode, day, starttime, endtime in class_timeslots:
+            insert_query = f"""
+            INSERT INTO UpdatedTables (slot_id, room_id, batch_id, subjectcode, day, starttime, endtime)
+            VALUES ({slot_id}, '{room_id}', '{batch_id}', '{subjectcode}', '{day}', '{starttime}', '{endtime}');
+            """
+            cursor.execute(insert_query)
+
+        
+        for selected_class in [cls[0] for cls in teacher_classes]:
+            # Query to get the time slots for the selected class on the specified day
+            timeslots_query = f"""
+            SELECT slot_id, room_id, batch_id, subjectcode, day, starttime, endtime
+            FROM UpdatedTables
+            WHERE batch_id = '{selected_class}' AND day = '{wday}' AND subjectcode IN (
+                SELECT subjectcode
+                FROM Teaches
+                WHERE teacherid = '{teacher_id}'
+            );
+            """
+            cursor.execute(timeslots_query)
+            class_timeslots = cursor.fetchall()
+
+            if not class_timeslots:
+                st.warning(f"No time slots found for {selected_class} on {day}.")
+                continue
+
+            # Delete the selected time slots from the 'UpdatedTables' table
+            for slot_id, room_id, batch_id, subjectcode, day, starttime, endtime in class_timeslots:
+                delete_query = f"""
+                DELETE FROM UpdatedTables
+                WHERE slot_id = {slot_id} AND batch_id = '{batch_id}' AND day = '{wday}' AND subjectcode = '{subjectcode}';
+                """
+                cursor.execute(delete_query)
+    conn.commit()
+
+    
+
+
 
 
 def add_teacher():
@@ -299,73 +358,95 @@ def edit_batches():
     # You can use st.text_input, st.button, and other Streamlit components to create the form
 
 
+
 def view_timetable():
     st.title("View TimeTable")
     uid = st.text_input("Enter Student ID or BatchID")
     if uid:
         st.session_state.timetable_id = uid
     if st.session_state.timetable_id:
-        st.write("Timetable for ",
-                 st.session_state.timetable_id)
-    # Modify the SQL query to include JOIN with the subjects table
+        st.write("Timetable for ", st.session_state.timetable_id)
+
+    # Original Timetable Query
     if len(st.session_state.timetable_id) > 12:
-        query = f"""
-            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname,t.batch_id
+        original_query = f"""
+            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
             FROM timeslot t
             JOIN subject s ON t.subjectcode = s.subjectcode
-            WHERE t.batch_id in
-            (SELECT batchid from Student where studentid = '{st.session_state.timetable_id}')
+            WHERE t.batch_id IN
+            (SELECT batchid FROM Student WHERE studentid = '{st.session_state.timetable_id}')
         """
-
     elif len(st.session_state.timetable_id) > 10:
-        query = f"""
-    SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname,t.batch_id
-    from (select * from timeslot natural join teaches where timeslot.subjectcode = teaches.subjectcode
-    and batchid = batch_id and teacherid='{st.session_state.timetable_id}')
-    as t natural join subject s where t.subjectcode = s.subjectcode;
+        original_query = f"""
+            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+            FROM (SELECT * FROM timeslot
+            NATURAL JOIN teaches
+            WHERE timeslot.subjectcode = teaches.subjectcode
+            AND batchid = batch_id AND teacherid='{st.session_state.timetable_id}') AS t
+            NATURAL JOIN subject s
+            WHERE t.subjectcode = s.subjectcode
         """
-
     else:
-        query = f"""
-            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname,t.batch_id
+        original_query = f"""
+            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
             FROM timeslot t
             JOIN subject s ON t.subjectcode = s.subjectcode
             WHERE t.batch_id = '{st.session_state.timetable_id}'
         """
 
-    cursor.execute(query)
-    result = cursor.fetchall()
+    cursor.execute(original_query)
+    original_result = cursor.fetchall()
+    updated_result = 0
+    # Updated Timetable Query
+    if len(st.session_state.timetable_id) <5:
+        updated_query = f"""
+            SELECT day, starttime, endtime, subjectcode, room_id, subjectcode, batch_id
+            FROM UpdatedTables
+            WHERE batch_id = '{st.session_state.timetable_id}'
+        """
+        cursor.execute(updated_query)
+        updated_result = cursor.fetchall()
 
-    if result:
-        # Convert the result to a Pandas DataFrame
-        df = pd.DataFrame(result, columns=[
-                          'day', 'starttime', 'endtime', 'subjectcode', 'room_id', 'subjectname', 'batchid'])
 
-        # Display the DataFrame
-        df['starttime'] = df['starttime'].astype(str)
-        df['endtime'] = df['endtime'].astype(str)
-        df['Timing'] = df['starttime'].str[-8:-3] + \
-            '-' + df['endtime'].str[-8:-3]
+    if original_result or updated_result:
+        st.write("Original Timetable:")
+        display_timetable(original_result)
 
-        day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-        df['day'] = pd.Categorical(
-            df['day'], categories=day_order, ordered=True)
+        if updated_result:
+            st.write("\nUpdated Timetable:")
+            display_timetable(updated_result)
 
-        if len(st.session_state.timetable_id) == 11:
-            df['alloted'] = df['subjectname'] + \
-                " [" + df['room_id'] + ']'+'('+df['batchid']+')'
-        else:
-            df['alloted'] = df['subjectname'] + " [" + df['room_id'] + ']'
-
-        timetable = df.pivot(index='day', columns='Timing', values='alloted')
-        timetable = timetable.reset_index()
-        # Increase row height using custom CSS
-        if not st.session_state.logged_in:
-            st.dataframe(timetable, hide_index=True)
-        else:
-            st.data_editor(timetable, hide_index=True)
     else:
         st.error("No entry found.")
+        
+def display_timetable(result):
+    # Convert the result to a Pandas DataFrame
+    df = pd.DataFrame(result, columns=[
+                      'day', 'starttime', 'endtime', 'subjectcode', 'room_id', 'subjectname', 'batch_id'])
+
+    # Display the DataFrame
+    df['starttime'] = df['starttime'].astype(str)
+    df['endtime'] = df['endtime'].astype(str)
+    df['Timing'] = df['starttime'].str[-8:-3] + '-' + df['endtime'].str[-8:-3]
+
+    day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    df['day'] = pd.Categorical(
+        df['day'], categories=day_order, ordered=True)
+
+    if len(st.session_state.timetable_id) == 11:
+        df['alloted'] = df['subjectname'] + \
+            " [" + df['room_id'] + ']' + '(' + df['batch_id'] + ')'
+    else:
+        df['alloted'] = df['subjectname'] + " [" + df['room_id'] + ']'
+
+    timetable = df.pivot(index='day', columns='Timing', values='alloted')
+    timetable = timetable.reset_index()
+
+    # Increase row height using custom CSS
+    if not st.session_state.logged_in:
+        st.dataframe(timetable, hide_index=True)
+    else:
+        st.data_editor(timetable, hide_index=True)
 
 
 def main():

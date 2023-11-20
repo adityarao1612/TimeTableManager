@@ -90,7 +90,13 @@ ADD CONSTRAINT fk_student_batch FOREIGN KEY (batchid) REFERENCES Batch(batchid);
 -- ALTER TABLE Timetable
 -- ADD CONSTRAINT fk_timetable_batch FOREIGN KEY (batch_id) REFERENCES Batch(batch_id);
 
-
-
-
+CREATE TABLE IF NOT EXISTS UpdatedTables (
+    slot_id INT PRIMARY KEY,
+    room_id VARCHAR(10),
+    batch_id varchar(2),
+    subjectcode VARchar(25),
+    day VARCHAR(10),
+    starttime TIME,
+    endtime TIME
+);
 
