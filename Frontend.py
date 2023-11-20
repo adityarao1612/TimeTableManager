@@ -335,11 +335,10 @@ def view_timetable():
 
     cursor.execute(query)
     result = cursor.fetchall()
-
+    
     if result:
         # Convert the result to a Pandas DataFrame
-        df = pd.DataFrame(result, columns=[
-                          'day', 'starttime', 'endtime', 'subjectcode', 'room_id', 'subjectname', 'batchid'])
+        df = pd.DataFrame(result, columns=['day', 'starttime', 'endtime', 'subjectcode', 'room_id', 'subjectname', 'batchid'])
 
         # Display the DataFrame
         df['starttime'] = df['starttime'].astype(str)
@@ -359,11 +358,63 @@ def view_timetable():
 
         timetable = df.pivot(index='day', columns='Timing', values='alloted')
         timetable = timetable.reset_index()
-        # Increase row height using custom CSS
+
+
+
         if not st.session_state.logged_in:
             st.dataframe(timetable, hide_index=True)
-        else:
-            st.data_editor(timetable, hide_index=True)
+
+        elif st.session_state.logged_in:
+            edited_data = st.data_editor(timetable, hide_index=True)
+
+            available_rooms_query = """
+                SELECT t.day, t.starttime, t.endtime, c.room_id
+                FROM Timeslot t
+                CROSS JOIN Classroom c
+                LEFT JOIN Timeslot t_used
+                    ON t.day = t_used.day
+                    AND t.starttime = t_used.starttime
+                    AND t.endtime = t_used.endtime
+                    AND c.room_id = t_used.room_id
+                    AND t.batch_id = t_used.batch_id
+                WHERE t_used.room_id IS NULL
+                    AND t.batch_id IS NOT NULL;
+            """
+
+            cursor.execute(available_rooms_query)
+            available_rooms_result = cursor.fetchall()
+
+            av_columns = ['day', 'starttime', 'endtime', 'room_id']
+            available_rooms_df = pd.DataFrame(available_rooms_result, columns=av_columns)
+
+            # Convert 'starttime' and 'endtime' to string
+            available_rooms_df['starttime'] = available_rooms_df['starttime'].astype(str)
+            available_rooms_df['endtime'] = available_rooms_df['endtime'].astype(str)
+
+            # Convert 'starttime' and 'endtime' to timedelta
+            available_rooms_df['starttime'] = pd.to_timedelta(available_rooms_df['starttime'])
+            available_rooms_df['endtime'] = pd.to_timedelta(available_rooms_df['endtime'])
+
+            # Convert timedelta to string in the format 'HH:mm:ss'
+            available_rooms_df['starttime'] = available_rooms_df['starttime'].astype(str).str.split().str[-1]
+            available_rooms_df['endtime'] = available_rooms_df['endtime'].astype(str).str.split().str[-1]
+
+            # Create 'Timing' column
+            available_rooms_df['Timing'] = (
+                available_rooms_df['starttime'] + '-' + available_rooms_df['endtime']
+            )
+
+            # Set categorical ordering for 'day'
+            day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+            available_rooms_df['day'] = pd.Categorical(available_rooms_df['day'], categories=day_order, ordered=True)
+
+            # Display the available rooms DataFrame
+            st.write("Available Rooms for Each Timestamp:")
+            st.dataframe(available_rooms_df, hide_index=True)
+            # Add a button to capture edited data
+            if st.button("Capture Edited Data"):
+                st.write("Captured Edited Data:", edited_data)
+
     else:
         st.error("No entry found.")
 
