@@ -1,4 +1,5 @@
 import streamlit as st
+import random
 import mysql.connector
 import time
 import pandas as pd
@@ -172,89 +173,105 @@ def edit_teachers():
     elif operation == "leave":
         leave()
 
-
 def leave():
-    st.title("Leave")
+    st.title("Leave Management")
+
+    # Sidebar menu for selecting leave operation
+    leave_operation = st.radio("Select Leave Operation", ["Add Leave", "Delete Leave"])
+
+    if leave_operation == "Add Leave":
+        add_leave()
+    elif leave_operation == "Delete Leave":
+        delete_leave()
+
+def add_leave():
+    st.subheader("Add Leave")
     teacher_id = st.text_input("Teacher ID")
+
+    # Menu dropdown for selecting the day on leave
     days = [
-        "Monday", 
+        "Monday",
         "Tuesday",
         "Wednesday",
         "Thursday",
         "Friday"
     ]
-    wday = st.selectbox("which day you are taking leave?", days)
+    wday = st.selectbox("Select the day on leave:", days)
 
-
-
-    # Query to get the classes taught by the teacher
-    classes_query = f"""
-    SELECT DISTINCT t.batchid
-    FROM Teaches t
-    WHERE t.teacherid = '{teacher_id}';
-    """
-
-
-
-    cursor.execute(classes_query)
-    teacher_classes = cursor.fetchall()
-
-    if not teacher_classes:
-        st.warning("No classes found for the given teacher.")
-        return
-    
-    for selected_class in [cls[0] for cls in teacher_classes]:
-        # Query to get the time slots for the selected class on the specified day
-        timeslots_query = f"""
-        SELECT slot_id, room_id, batch_id, subjectcode, day, starttime, endtime
-        FROM Timeslot
-        WHERE batch_id = '{selected_class}';
-        """
-        cursor.execute(timeslots_query)
-        class_timeslots = cursor.fetchall()
-
-        if not class_timeslots:
-            st.warning(f"No time slots found for {selected_class} on {day}.")
-            continue
-
-        # Add the selected time slots to the 'UpdatedTables' table
-
-        for slot_id, room_id, batch_id, subjectcode, day, starttime, endtime in class_timeslots:
-            insert_query = f"""
-            INSERT INTO UpdatedTables (slot_id, room_id, batch_id, subjectcode, day, starttime, endtime)
-            VALUES ({slot_id}, '{room_id}', '{batch_id}', '{subjectcode}', '{day}', '{starttime}', '{endtime}');
-            """
-            cursor.execute(insert_query)
-
+    # Button to confirm leave
+    if st.button("Confirm Leave"):
+        process_leave(teacher_id, wday)
         
-        for selected_class in [cls[0] for cls in teacher_classes]:
-            # Query to get the time slots for the selected class on the specified day
-            timeslots_query = f"""
-            SELECT slot_id, room_id, batch_id, subjectcode, day, starttime, endtime
-            FROM UpdatedTables
-            WHERE batch_id = '{selected_class}' AND day = '{wday}' AND subjectcode IN (
-                SELECT subjectcode
-                FROM Teaches
-                WHERE teacherid = '{teacher_id}'
-            );
-            """
-            cursor.execute(timeslots_query)
-            class_timeslots = cursor.fetchall()
 
-            if not class_timeslots:
-                st.warning(f"No time slots found for {selected_class} on {day}.")
-                continue
+def display_teachers_on_leave():
+    # Fetch data from LeaveTable to display teachers on leave
+    query = "SELECT teacher_id, leave_day FROM LeaveTable"
+    cursor.execute(query)
+    leave_data = cursor.fetchall()
 
-            # Delete the selected time slots from the 'UpdatedTables' table
-            for slot_id, room_id, batch_id, subjectcode, day, starttime, endtime in class_timeslots:
-                delete_query = f"""
-                DELETE FROM UpdatedTables
-                WHERE slot_id = {slot_id} AND batch_id = '{batch_id}' AND day = '{wday}' AND subjectcode = '{subjectcode}';
-                """
-                cursor.execute(delete_query)
+    if leave_data:
+        st.subheader("Teachers on Leave:")
+        leave_df = pd.DataFrame(leave_data, columns=["Teacher ID", "Leave Day"])
+        st.table(leave_df,hide_index=True)
+    else:
+        st.subheader("No teachers currently on leave.")
+
+def delete_leave():
+    st.subheader("Delete Leave")
+    display_teachers_on_leave()
+
+    teacher_id = st.text_input("Teacher ID")
+
+    # Menu dropdown for selecting the day to delete leave
+    days = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday"
+    ]
+    wday = st.selectbox("Select the day to delete leave:", days)
+
+    # Button to confirm leave deletion
+    if st.button("Confirm Leave Deletion"):
+        process_leave_deletion(teacher_id, wday)
+
+def process_leave(teacher_id, wday):
+    # Insert the teacher into the 'LeaveTable'
+    insert_leave_query = f"""
+    INSERT INTO LeaveTable (teacher_id, leave_day)
+    VALUES ('{teacher_id}', '{wday}');
+    """
+    cursor.execute(insert_leave_query)
     conn.commit()
 
-    
+    st.success(f"Leave for Teacher {teacher_id} on {wday} processed successfully.")
+
+def process_leave_deletion(teacher_id, wday):
+    # Delete the teacher's leave from the 'LeaveTable'
+    delete_leave_query = f"""
+    DELETE FROM LeaveTable
+    WHERE teacher_id = '{teacher_id}' AND leave_day = '{wday}';
+    """
+    cursor.execute(delete_leave_query)
+    conn.commit()
+
+    st.success(f"Leave deletion for Teacher {teacher_id} on {wday} processed successfully.")
+
+def display_teachers_on_leave():
+    # Fetch data from LeaveTable to display teachers on leave
+    query = "SELECT teacher_id, leave_day FROM LeaveTable"
+    cursor.execute(query)
+    leave_data = cursor.fetchall()
+
+    if leave_data:
+        st.subheader("Teachers on Leave:")
+        leave_df = pd.DataFrame(leave_data, columns=["Teacher ID", "Leave Day"])
+        st.table(leave_df)
+    else:
+        st.subheader("No teachers currently on leave.")
+
+
 def add_teacher():
     st.title("Add Teacher")
 
@@ -366,6 +383,7 @@ def view_timetable():
     if st.session_state.timetable_id:
         st.write("Timetable for ", st.session_state.timetable_id)
 
+    batch = False
     # Original Timetable Query
     if len(st.session_state.timetable_id) > 12:
         original_query = f"""
@@ -391,11 +409,14 @@ def view_timetable():
             FROM timeslot t
             JOIN subject s ON t.subjectcode = s.subjectcode
             WHERE t.batch_id = '{st.session_state.timetable_id}'
+
         """
+        batch=st.session_state.timetable_id
 
     cursor.execute(original_query)
     original_result = cursor.fetchall()
     updated_result = 0
+
     # Updated Timetable Query
     if len(st.session_state.timetable_id) <5:
         updated_query = f"""
@@ -409,16 +430,20 @@ def view_timetable():
 
     if original_result or updated_result:
         st.write("Original Timetable:")
-        display_timetable(original_result)
-
+        updt = display_timetable(original_result,batch)
+        if st.button("update"):
+            update_table(updt)       
         if updated_result:
             st.write("\nUpdated Timetable:")
-            display_timetable(updated_result)
+            display_timetable(updated_result,batch)
 
     else:
         st.error("No entry found.")
-        
-def display_timetable(result):
+
+
+def update_table(updated_vals):
+    pass    
+def display_timetable(result,batch):
     # Convert the result to a Pandas DataFrame
     df = pd.DataFrame(result, columns=[
                       'day', 'starttime', 'endtime', 'subjectcode', 'room_id', 'subjectname', 'batch_id'])
@@ -446,6 +471,11 @@ def display_timetable(result):
         st.dataframe(timetable, hide_index=True)
     else:
         updated_vals = st.data_editor(timetable, hide_index=True)
+        return updated_vals
+
+
+
+
 
 
 def main():

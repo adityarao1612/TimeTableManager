@@ -100,3 +100,47 @@ CREATE TABLE IF NOT EXISTS UpdatedTables (
     endtime TIME
 );
 
+
+CREATE TABLE LeaveTable (
+    leave_id INT AUTO_INCREMENT PRIMARY KEY,
+    teacher_id VARCHAR(255) NOT NULL,
+    leave_day VARCHAR(255) NOT NULL,
+    CONSTRAINT unique_leave UNIQUE (teacher_id, leave_day)
+);
+
+
+DELIMITER //
+CREATE TRIGGER after_leave_insert
+AFTER INSERT ON LeaveTable
+FOR EACH ROW
+BEGIN
+    DELETE FROM UpdatedTables
+    WHERE batch_id IN (
+        SELECT batchid FROM Teaches WHERE teacherid = NEW.teacher_id
+    ) AND day = NEW.leave_day AND subjectcode IN (
+        SELECT subjectcode FROM Teaches WHERE teacherid = NEW.teacher_id
+    );
+END;
+//
+DELIMITER ;
+
+
+DELIMITER //
+CREATE TRIGGER after_leave_delete
+AFTER DELETE ON LeaveTable
+FOR EACH ROW
+BEGIN
+    INSERT INTO UpdatedTables (slot_id, room_id, batch_id, subjectcode, day, starttime, endtime)
+    SELECT ts.slot_id, ts.room_id, ts.batch_id, ts.subjectcode, ts.day, ts.starttime, ts.endtime
+    FROM Timeslot ts
+    WHERE ts.batch_id IN (
+            SELECT batchid FROM Teaches WHERE teacherid = OLD.teacher_id
+        )
+        AND NOT EXISTS (
+            SELECT 1
+            FROM UpdatedTables ut
+            WHERE ut.slot_id = ts.slot_id
+        );
+END;
+//
+DELIMITER ;
