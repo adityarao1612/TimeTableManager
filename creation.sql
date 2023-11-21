@@ -127,7 +127,6 @@ END;
 DELIMITER ;
 
 
-
 DELIMITER //
 CREATE TRIGGER after_leave_delete
 AFTER DELETE ON LeaveTable
@@ -136,14 +135,9 @@ BEGIN
     INSERT INTO UpdatedTables (slot_id, room_id, batch_id, subjectcode, day, starttime, endtime)
     SELECT ts.slot_id, ts.room_id, ts.batch_id, ts.subjectcode, ts.day, ts.starttime, ts.endtime
     FROM Timeslot ts
-    WHERE ts.batch_id IN (
-            SELECT batchid FROM Teaches WHERE teacherid = OLD.teacher_id
-        )
-        AND NOT EXISTS (
-            SELECT 1
-            FROM UpdatedTables ut
-            WHERE ut.slot_id = ts.slot_id
-        );
+    WHERE (ts.batch_id, ts.subjectcode) IN (
+        SELECT batchid, subjectcode FROM Teaches WHERE teacherid = OLD.teacher_id
+    ) AND day = OLD.leave_day;
 END;
 //
 DELIMITER ;
