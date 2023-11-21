@@ -371,6 +371,17 @@ def view_teacher():
             df = pd.DataFrame([result], columns=[
                               'teacherid', 'name', 'dept', 'email'])
             st.dataframe(df, hide_index=True)
+            # group by:
+            query = f"SELECT teacherid,count(*) FROM Teaches group by teacherid having teacherid = '{
+                teacher_id}'"
+            cursor.execute(query)
+            result = cursor.fetchone()
+
+            # Create DataFrame directly
+            # df = pd.DataFrame([result], columns=[
+            #                   'teacherid', 'count of classes teaching'])
+            # s = pd.DataFrame
+            st.write(result[0], "teaches", str(result[1]), "batches")
 
         else:
             st.error("No entry found.")
@@ -453,6 +464,8 @@ def view_timetable():
             WHERE t.batch_id IN
             (SELECT batchid FROM Student WHERE studentid = '{st.session_state.timetable_id}')
         """
+
+    # NESTED AND JOIN
     elif len(st.session_state.timetable_id) > 10:
         updated_query = f"""
             SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
@@ -469,8 +482,8 @@ def view_timetable():
             FROM UpdatedTables t
             JOIN subject s ON t.subjectcode = s.subjectcode
             WHERE t.batch_id = '{st.session_state.timetable_id}'
-
         """
+
         cursor.execute(updated_query)
         updated_result = cursor.fetchall()
         print(updated_result)
