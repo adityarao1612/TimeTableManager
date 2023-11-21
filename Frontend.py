@@ -36,8 +36,12 @@ def admin_dashboard():
     st.write("Welcome,", st.session_state.user[0])
 
     # Add buttons
+    # selected_option = st.radio("Select an option:", [
+    #                            "Edit Student", "Edit Teacher", "Edit Subject", "Edit Room", "Edit Timeslot", "Edit Batch", "Generate timetable"])
+
+    # Add buttons
     selected_option = st.radio("Select an option:", [
-                               "Edit Student", "Edit Teacher", "Edit Subject", "Edit Room", "Edit Timeslot", "Edit Batch", "Generate timetable"])
+                               "Edit Student", "Edit Teacher"])
 
     if selected_option == "Edit Student":
         edit_students()
@@ -140,17 +144,18 @@ def remove_student():
 
 def update_student():
     st.title("Update Student")
+    rollno = st.text_input("SRN")
     name = st.text_input("Name")
-    rollno = st.text_input("Roll Number")
     batchid = st.text_input("Batch ID")
-
-    if st.button("Update Student"):
-        query = f"UPDATE Student SET studentname = '{
-            name}', batchid = '{batchid}' WHERE studentid = '{rollno}'"
-        cursor.execute(query)
-        conn.commit()
-        st.success("Student updated successfully!")
-
+    try:
+        if st.button("Update Student"):
+            query = f"UPDATE Student SET name = '{
+                name}',semester={int(batchid[0])},section='{batchid[1]}', batchid = '{batchid}' WHERE studentid = '{rollno}'"
+            cursor.execute(query)
+            conn.commit()
+            st.success("Student updated successfully!")
+    except Exception as error:
+        st.error(error)
     # Add functionality to edit student information in the database
     # You can use st.text_input, st.button, and other Streamlit components to create the form
 
@@ -397,6 +402,7 @@ def view_timetable():
 
     batch = False
     # Original Timetable Query
+
     if len(st.session_state.timetable_id) > 12:
         original_query = f"""
             SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
@@ -430,31 +436,98 @@ def view_timetable():
     updated_result = 0
 
     # Updated Timetable Query
-    if len(st.session_state.timetable_id) < 5:
-        updated_query = f"""
-            SELECT day, starttime, endtime, subjectcode, room_id, subjectcode, batch_id
-            FROM UpdatedTables
-            WHERE batch_id = '{st.session_state.timetable_id}'
-        """
 
+    if len(st.session_state.timetable_id) > 12:
+        updated_query = f"""
+            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+            FROM UpdatedTables
+            JOIN subject s ON t.subjectcode = s.subjectcode
+            WHERE t.batch_id IN
+            (SELECT batchid FROM Student WHERE studentid = '{st.session_state.timetable_id}')
+        """
+    elif len(st.session_state.timetable_id) > 10:
+        updated_query = f"""
+            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+            FROM (SELECT * FROM UpdatedTables
+            NATURAL JOIN teaches
+            WHERE UpdatedTables.subjectcode = teaches.subjectcode
+            AND batchid = batch_id AND teacherid='{st.session_state.timetable_id}') AS t
+            NATURAL JOIN subject s
+            WHERE t.subjectcode = s.subjectcode
+        """
+    else:
+        updated_query = f"""
+            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+            FROM UpdatedTables t
+            JOIN subject s ON t.subjectcode = s.subjectcode
+            WHERE t.batch_id = '{st.session_state.timetable_id}'
+
+        """
         cursor.execute(updated_query)
         updated_result = cursor.fetchall()
         print(updated_result)
     if original_result or updated_result:
         st.write("Original Timetable:")
         updt = display_timetable(original_result, batch)
-        if st.button("update"):
-            update_table(updt)
         if updated_result:
-            st.write("\nUpdated Timetable:")
-            display_timetable(updated_result, batch)
+            st.write("\n Updated Timetable:")
+            updt = display_timetable(updated_result, batch)
+            # updt = display_timetable(original_result, batch)
+
+        if st.button("update"):
+            print("\n\n\n\n\n-------\n\n\n")
+            # print(updt)
+            update_table(updt, batch)
 
     else:
         st.error("No entry found.")
 
 
-def update_table(updated_vals):
-    pass
+def update_table(updated_vals, batchid):
+    # Assuming updated_vals is a list of dictionaries
+    # Example: [{'day': 'Monday', 'timing': '09:00-10:00', 'alloted': 'Subject [Room] (Batch)'}]
+
+    tuples_list = [tuple(x)
+                   for x in updated_vals.itertuples(index=False, name=None)]
+    # column_names_tuple = tuple(updated_vals.columns)
+
+    # timeslot = column_names_tuple[1:]
+    # print(timeslot)
+    # print(tuples_list)
+    slotid = 1
+    for day, *values in tuples_list:
+        for subject in values:
+            if subject:
+                try:
+                    subjectNAME, room_id = subject.split(' [')
+                    room_id = room_id[0:-1]
+                    # print(tuple((slotid, subjectcode, room_id)))
+                    # print(subject.split('['))
+                    query = f"""
+                    SELECT subjectcode from subject where subject.subjectname = '{subjectNAME}'
+                    """
+                    # print(batchid)
+                    cursor.execute(query)
+                    # print(query)
+                    subjectcode = cursor.fetchone()[0]
+                    # conn.commit()
+
+                    print(subjectcode)
+                    query = f"""
+                    UPDATE UpdatedTables
+                    SET room_id = '{room_id}',
+                    subjectcode = '{subjectcode}'
+                    WHERE slot_id = {slotid} AND batch_id = '{batchid}';
+                    """
+                    # print(batchid)
+                    cursor.execute(query)
+                    # print(query)
+                    conn.commit()
+
+                except Exception as error:
+                    st.error(error)
+                slotid = slotid+1
+    st.success("Student updated successfully!")
 
 
 def display_timetable(result, batch):
