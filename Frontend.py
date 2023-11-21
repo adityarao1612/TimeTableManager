@@ -244,8 +244,13 @@ def delete_leave():
     ]
     wday = st.selectbox("Select the day to delete leave:", days)
 
+    # Call the stored procedure
+
     # Button to confirm leave deletion
     if st.button("Confirm Leave Deletion"):
+        cursor.callproc("AfterLeaveInsertProcedure", (teacher_id, wday, '5A'))
+        conn.commit()
+
         process_leave_deletion(teacher_id, wday)
 
 

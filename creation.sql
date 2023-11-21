@@ -113,6 +113,56 @@ CREATE TABLE LeaveTable (
     CONSTRAINT unique_leave UNIQUE (teacher_id, leave_day)
 );
 
+
+
+DELIMITER //
+
+CREATE PROCEDURE AfterLeaveInsertProcedure(
+    IN p_teacher_id VARCHAR(13),
+    IN p_leave_day VARCHAR(255),
+	IN p_batch_id VARCHAR(2)
+)
+BEGIN
+    -- Perform the logic of after_leave_insert trigger
+DELETE FROM UpdatedTables
+WHERE (slot_id,batch_id) IN (
+	SELECT t.slot_id,te.batchid FROM Teaches te natural join timeslot t WHERE te.teacherid = p_teacher_id and te.subjectcode = t.subjectcode 
+	and te.batchid = t.batch_id AND t.day = p_leave_day
+	)
+     ;
+END;
+
+
+
+//
+DELIMITER;
+
+
+
+
+
+
+
+DELIMITER //
+-- drop IF Exists PROCEDURE AfterLeaveInsertProcedure2;
+CREATE PROCEDURE AfterLeaveInsertProcedure2(
+    IN p_teacher_id VARCHAR(13),
+    IN p_leave_day VARCHAR(255)
+)
+BEGIN
+select * FROM UpdatedTables
+WHERE (slot_id,batch_id) IN (
+	SELECT t.slot_id,te.batchid FROM Teaches te natural join timeslot t WHERE te.teacherid = p_teacher_id and te.subjectcode = t.subjectcode 
+	and te.batchid = t.batch_id AND t.day = p_leave_day
+	)
+     ;
+END;
+//
+DELIMITER;
+
+
+
+
 DELIMITER //
 CREATE TRIGGER after_leave_insert
 AFTER INSERT ON LeaveTable
@@ -124,7 +174,7 @@ BEGIN
           ) AND day = NEW.leave_day;
 END;
 //
-DELIMITER ;
+DELIMITER ;	
 
 
 DELIMITER //
