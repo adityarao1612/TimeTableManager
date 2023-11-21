@@ -363,7 +363,7 @@ def view_timetable():
         if not st.session_state.logged_in:
             st.dataframe(timetable, hide_index=True)
         else:
-            st.data_editor(timetable, hide_index=True)
+            updated_val = st.data_editor(timetable, hide_index=True)
     else:
         st.error("No entry found.")
 
