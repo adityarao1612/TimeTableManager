@@ -24,7 +24,8 @@ cursor = conn.cursor()
 
 # check admin username and password:
 def authenticate(username, password):
-    query = f"SELECT * FROM admin WHERE username = '{username}' AND password = '{password}'"
+    query = f"SELECT * FROM admin WHERE username = '{
+        username}' AND password = '{password}'"
     cursor.execute(query)
     result = cursor.fetchone()
     return result is not None
@@ -46,7 +47,6 @@ def admin_dashboard():
 
     elif selected_option == "Edit Subject":
         edit_subjects()
-
 
     elif selected_option == "Generate timetable":
         generate_timetable()
@@ -109,7 +109,8 @@ def add_student():
 
     if st.button("Add Student"):
         try:
-            query = f"INSERT INTO Student VALUES ('{id}', '{name}', {semester}, '{section}', '{batchid}')"
+            query = f"INSERT INTO Student VALUES ('{id}', '{name}', {semester}, '{
+                section}', '{batchid}')"
             print("SQL Query:", query)
 
             cursor.execute(query)
@@ -144,7 +145,8 @@ def update_student():
     batchid = st.text_input("Batch ID")
 
     if st.button("Update Student"):
-        query = f"UPDATE Student SET studentname = '{name}', batchid = '{batchid}' WHERE studentid = '{rollno}'"
+        query = f"UPDATE Student SET studentname = '{
+            name}', batchid = '{batchid}' WHERE studentid = '{rollno}'"
         cursor.execute(query)
         conn.commit()
         st.success("Student updated successfully!")
@@ -160,7 +162,7 @@ def edit_teachers():
     # You can use st.text_input, st.button, and other Streamlit components to create the form
 
     operation = st.radio("Select Action", [
-                         "Add Teacher", "Remove Teacher", "Update Teacher", "View teacher details","leave"])
+                         "Add Teacher", "Remove Teacher", "Update Teacher", "View teacher details", "leave"])
 
     if operation == "Add Teacher":
         add_teacher()
@@ -173,16 +175,19 @@ def edit_teachers():
     elif operation == "leave":
         leave()
 
+
 def leave():
     st.title("Leave Management")
 
     # Sidebar menu for selecting leave operation
-    leave_operation = st.radio("Select Leave Operation", ["Add Leave", "Delete Leave"])
+    leave_operation = st.radio("Select Leave Operation", [
+                               "Add Leave", "Delete Leave"])
 
     if leave_operation == "Add Leave":
         add_leave()
     elif leave_operation == "Delete Leave":
         delete_leave()
+
 
 def add_leave():
     st.subheader("Add Leave")
@@ -201,7 +206,7 @@ def add_leave():
     # Button to confirm leave
     if st.button("Confirm Leave"):
         process_leave(teacher_id, wday)
-        
+
 
 def display_teachers_on_leave():
     # Fetch data from LeaveTable to display teachers on leave
@@ -211,10 +216,12 @@ def display_teachers_on_leave():
 
     if leave_data:
         st.subheader("Teachers on Leave:")
-        leave_df = pd.DataFrame(leave_data, columns=["Teacher ID", "Leave Day"])
-        st.table(leave_df,hide_index=True)
+        leave_df = pd.DataFrame(leave_data, columns=[
+                                "Teacher ID", "Leave Day"])
+        st.table(leave_df, hide_index=True)
     else:
         st.subheader("No teachers currently on leave.")
+
 
 def delete_leave():
     st.subheader("Delete Leave")
@@ -236,6 +243,7 @@ def delete_leave():
     if st.button("Confirm Leave Deletion"):
         process_leave_deletion(teacher_id, wday)
 
+
 def process_leave(teacher_id, wday):
     # Insert the teacher into the 'LeaveTable'
     insert_leave_query = f"""
@@ -245,7 +253,9 @@ def process_leave(teacher_id, wday):
     cursor.execute(insert_leave_query)
     conn.commit()
 
-    st.success(f"Leave for Teacher {teacher_id} on {wday} processed successfully.")
+    st.success(f"Leave for Teacher {teacher_id} on {
+               wday} processed successfully.")
+
 
 def process_leave_deletion(teacher_id, wday):
     # Delete the teacher's leave from the 'LeaveTable'
@@ -256,7 +266,9 @@ def process_leave_deletion(teacher_id, wday):
     cursor.execute(delete_leave_query)
     conn.commit()
 
-    st.success(f"Leave deletion for Teacher {teacher_id} on {wday} processed successfully.")
+    st.success(f"Leave deletion for Teacher {teacher_id} on {
+               wday} processed successfully.")
+
 
 def display_teachers_on_leave():
     # Fetch data from LeaveTable to display teachers on leave
@@ -266,7 +278,8 @@ def display_teachers_on_leave():
 
     if leave_data:
         st.subheader("Teachers on Leave:")
-        leave_df = pd.DataFrame(leave_data, columns=["Teacher ID", "Leave Day"])
+        leave_df = pd.DataFrame(leave_data, columns=[
+                                "Teacher ID", "Leave Day"])
         st.table(leave_df)
     else:
         st.subheader("No teachers currently on leave.")
@@ -374,7 +387,6 @@ def edit_batches():
     # You can use st.text_input, st.button, and other Streamlit components to create the form
 
 
-
 def view_timetable():
     st.title("View TimeTable")
     uid = st.text_input("Enter Student ID or BatchID")
@@ -411,39 +423,41 @@ def view_timetable():
             WHERE t.batch_id = '{st.session_state.timetable_id}'
 
         """
-        batch=st.session_state.timetable_id
+        batch = st.session_state.timetable_id
 
     cursor.execute(original_query)
     original_result = cursor.fetchall()
     updated_result = 0
 
     # Updated Timetable Query
-    if len(st.session_state.timetable_id) <5:
+    if len(st.session_state.timetable_id) < 5:
         updated_query = f"""
             SELECT day, starttime, endtime, subjectcode, room_id, subjectcode, batch_id
             FROM UpdatedTables
             WHERE batch_id = '{st.session_state.timetable_id}'
         """
+
         cursor.execute(updated_query)
         updated_result = cursor.fetchall()
-
-
+        print(updated_result)
     if original_result or updated_result:
         st.write("Original Timetable:")
-        updt = display_timetable(original_result,batch)
+        updt = display_timetable(original_result, batch)
         if st.button("update"):
-            update_table(updt)       
+            update_table(updt)
         if updated_result:
             st.write("\nUpdated Timetable:")
-            display_timetable(updated_result,batch)
+            display_timetable(updated_result, batch)
 
     else:
         st.error("No entry found.")
 
 
 def update_table(updated_vals):
-    pass    
-def display_timetable(result,batch):
+    pass
+
+
+def display_timetable(result, batch):
     # Convert the result to a Pandas DataFrame
     df = pd.DataFrame(result, columns=[
                       'day', 'starttime', 'endtime', 'subjectcode', 'room_id', 'subjectname', 'batch_id'])
@@ -471,11 +485,8 @@ def display_timetable(result,batch):
         st.dataframe(timetable, hide_index=True)
     else:
         updated_vals = st.data_editor(timetable, hide_index=True)
+        # st.write(updated_vals)
         return updated_vals
-
-
-
-
 
 
 def main():

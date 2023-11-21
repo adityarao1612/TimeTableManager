@@ -1,3 +1,4 @@
+drop database timetablemanager;
 create database IF NOT EXISTS timetablemanager;
 use timetablemanager;
 
@@ -58,13 +59,15 @@ CREATE TABLE IF NOT EXISTS Batch (
 
 -- Timeslot table
 CREATE TABLE IF NOT EXISTS Timeslot (
-    slot_id INT PRIMARY KEY,
+    slot_id INT,
     room_id VARCHAR(10),
-    batch_id varchar(2),
-    subjectcode VARchar(25),
+    batch_id VARCHAR(2),
+    subjectcode VARCHAR(25),
     day VARCHAR(10),
     starttime TIME,
-    endtime TIME);
+    endtime TIME,
+    PRIMARY KEY (slot_id, room_id)
+);
 
 -- Add foreign key constraint to Teaches table
 ALTER TABLE Teaches
@@ -91,13 +94,15 @@ ADD CONSTRAINT fk_student_batch FOREIGN KEY (batchid) REFERENCES Batch(batchid);
 -- ADD CONSTRAINT fk_timetable_batch FOREIGN KEY (batch_id) REFERENCES Batch(batch_id);
 
 CREATE TABLE IF NOT EXISTS UpdatedTables (
-    slot_id INT PRIMARY KEY,
+    slot_id INT,
     room_id VARCHAR(10),
     batch_id varchar(2),
     subjectcode VARchar(25),
     day VARCHAR(10),
     starttime TIME,
-    endtime TIME
+    endtime TIME,
+	PRIMARY KEY (slot_id, room_id)
+
 );
 
 
@@ -108,21 +113,19 @@ CREATE TABLE LeaveTable (
     CONSTRAINT unique_leave UNIQUE (teacher_id, leave_day)
 );
 
-
 DELIMITER //
 CREATE TRIGGER after_leave_insert
 AFTER INSERT ON LeaveTable
 FOR EACH ROW
 BEGIN
     DELETE FROM UpdatedTables
-    WHERE batch_id IN (
-        SELECT batchid FROM Teaches WHERE teacherid = NEW.teacher_id
-    ) AND day = NEW.leave_day AND subjectcode IN (
-        SELECT subjectcode FROM Teaches WHERE teacherid = NEW.teacher_id
-    );
+    WHERE (batch_id,subjectcode) IN (
+        SELECT batchid,subjectcode FROM Teaches WHERE teacherid = NEW.teacher_id   
+          ) AND day = NEW.leave_day;
 END;
 //
 DELIMITER ;
+
 
 
 DELIMITER //
