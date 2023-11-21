@@ -468,10 +468,10 @@ def view_timetable():
         print(updated_result)
     if original_result or updated_result:
         st.write("Original Timetable:")
-        updt = display_timetable(original_result, batch)
+        updt = display_timetable(original_result, batch, "original")
         if updated_result:
             st.write("\n Updated Timetable:")
-            updt = display_timetable(updated_result, batch)
+            updt = display_timetable(updated_result, batch, "updated")
             # updt = display_timetable(original_result, batch)
 
         if st.button("update"):
@@ -484,8 +484,50 @@ def view_timetable():
 
 
 def update_table(updated_vals, batchid):
-    # Assuming updated_vals is a list of dictionaries
-    # Example: [{'day': 'Monday', 'timing': '09:00-10:00', 'alloted': 'Subject [Room] (Batch)'}]
+    #     # Assuming updated_vals is a list of dictionaries
+    #     # Example: [{'day': 'Monday', 'timing': '09:00-10:00', 'alloted': 'Subject [Room] (Batch)'}]
+
+    #     tuples_list = [tuple(x)
+    #                    for x in updated_vals.itertuples(index=False, name=None)]
+    #     # column_names_tuple = tuple(updated_vals.columns)
+
+    #     # timeslot = column_names_tuple[1:]
+    #     # print(timeslot)
+    #     # print(tuples_list)
+    #     slotid = 1
+    #     for day, *values in tuples_list:
+    #         for subject in values:
+    #             if subject:
+    #                 try:
+    #                     subjectNAME, room_id = subject.split(' [')
+    #                     room_id = room_id[0:-1]
+    #                     # print(tuple((slotid, subjectcode, room_id)))
+    #                     # print(subject.split('['))
+    #                     query = f"""
+    #                     SELECT subjectcode from subject where subject.subjectname = '{subjectNAME}'
+    #                     """
+    #                     # print(batchid)
+    #                     cursor.execute(query)
+    #                     # print(query)
+    #                     subjectcode = cursor.fetchone()[0]
+    #                     # conn.commit()
+
+    #                     print(subjectcode)
+    #                     query = f"""
+    #                     UPDATE UpdatedTables
+    #                     SET room_id = '{room_id}',
+    #                     subjectcode = '{subjectcode}'
+    #                     WHERE slot_id = {slotid} AND batch_id = '{batchid}';
+    #                     """
+    #                     # print(batchid)
+    #                     cursor.execute(query)
+    #                     # print(query)
+    #                     conn.commit()
+
+    #                 except Exception as error:
+    #                     st.error(error)
+    #                 slotid = slotid+1
+    #     st.success("Student updated successfully!")
 
     tuples_list = [tuple(x)
                    for x in updated_vals.itertuples(index=False, name=None)]
@@ -500,6 +542,7 @@ def update_table(updated_vals, batchid):
             if subject:
                 try:
                     subjectNAME, room_id = subject.split(' [')
+
                     room_id = room_id[0:-1]
                     # print(tuple((slotid, subjectcode, room_id)))
                     # print(subject.split('['))
@@ -512,13 +555,34 @@ def update_table(updated_vals, batchid):
                     subjectcode = cursor.fetchone()[0]
                     # conn.commit()
 
-                    print(subjectcode)
+                    # print(subjectcode)
+
                     query = f"""
-                    UPDATE UpdatedTables
-                    SET room_id = '{room_id}',
-                    subjectcode = '{subjectcode}'
-                    WHERE slot_id = {slotid} AND batch_id = '{batchid}';
+                    Select slot_id from UpdatedTables
+                    WHERE batch_id = '{batchid}';
                     """
+                    cursor.execute(query)
+                    exists = cursor.fetchall()
+                    existingid = [x[0] for x in exists]
+                    print(slotid in existingid, slotid)
+
+                    if not (slotid in existingid):
+
+                        query = f"""
+                            INSERT INTO UpdatedTables (slot_id, room_id, batch_id, subjectcode, day, starttime, endtime)
+                            SELECT *
+                            FROM Timeslot ts
+                            WHERE ts.batch_id = '{batchid}' and ts.slot_id={slotid};
+                            """
+                        cursor.execute(query)
+                        conn.commit()
+
+                    query = f"""
+                        UPDATE UpdatedTables
+                        SET room_id = '{room_id}',
+                        subjectcode = '{subjectcode}'
+                        WHERE slot_id = {slotid} AND batch_id = '{batchid}';
+                        """
                     # print(batchid)
                     cursor.execute(query)
                     # print(query)
@@ -530,7 +594,7 @@ def update_table(updated_vals, batchid):
     st.success("Student updated successfully!")
 
 
-def display_timetable(result, batch):
+def display_timetable(result, batch, s):
     # Convert the result to a Pandas DataFrame
     df = pd.DataFrame(result, columns=[
                       'day', 'starttime', 'endtime', 'subjectcode', 'room_id', 'subjectname', 'batch_id'])
@@ -557,7 +621,8 @@ def display_timetable(result, batch):
     if not st.session_state.logged_in:
         st.dataframe(timetable, hide_index=True)
     else:
-        updated_vals = st.data_editor(timetable, hide_index=True)
+        updated_vals = st.data_editor(
+            timetable, key='data_editor'+s, hide_index=True)
         # st.write(updated_vals)
         return updated_vals
 
