@@ -194,6 +194,8 @@ def leave():
     WHERE t.teacherid = '{teacher_id}';
     """
 
+
+
     cursor.execute(classes_query)
     teacher_classes = cursor.fetchall()
 
@@ -216,6 +218,7 @@ def leave():
             continue
 
         # Add the selected time slots to the 'UpdatedTables' table
+
         for slot_id, room_id, batch_id, subjectcode, day, starttime, endtime in class_timeslots:
             insert_query = f"""
             INSERT INTO UpdatedTables (slot_id, room_id, batch_id, subjectcode, day, starttime, endtime)
@@ -252,10 +255,6 @@ def leave():
     conn.commit()
 
     
-
-
-
-
 def add_teacher():
     st.title("Add Teacher")
 
@@ -446,7 +445,7 @@ def display_timetable(result):
     if not st.session_state.logged_in:
         st.dataframe(timetable, hide_index=True)
     else:
-        st.data_editor(timetable, hide_index=True)
+        updated_vals = st.data_editor(timetable, hide_index=True)
 
 
 def main():
