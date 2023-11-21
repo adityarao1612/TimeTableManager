@@ -305,8 +305,10 @@ def add_teacher():
 
     if st.button("Add Teacher"):
         try:
-            query = "INSERT INTO Teacher VALUES (?, ?, ?, ?)"
-            cursor.execute(query, (teacher_id, name, department, email))
+            query = f"INSERT INTO Teacher VALUES ('{teacher_id}', '{name}', '{
+                department}', '{email}')"
+
+            cursor.execute(query)
             conn.commit()
             st.success("Teacher added successfully!")
 
@@ -326,8 +328,8 @@ def remove_teacher():
 
     if st.button("Remove Teacher"):
         try:
-            query = "DELETE FROM Teacher WHERE teacherid = ?"
-            cursor.execute(query, (teacher_id,))
+            query = f"DELETE FROM Teacher WHERE teacherid =  '{teacher_id}'"
+            cursor.execute(query)
             conn.commit()
             st.success("Teacher removed successfully!")
 
@@ -345,8 +347,9 @@ def update_teacher():
 
     if st.button("Update Teacher"):
         try:
-            query = "UPDATE Teacher SET name = ?, dept = ?, email = ? WHERE teacherid = ?"
-            cursor.execute(query, (name, department, email, teacher_id))
+            query = f"UPDATE Teacher SET name = '{name}',dept = '{
+                department}', email '{email}' WHERE teacherid = '{teacher_id}')"
+            cursor.execute(query)
             conn.commit()
             st.success("Teacher updated successfully!")
 
@@ -632,6 +635,25 @@ def display_timetable(result, batch, s):
         return updated_vals
 
 
+def signup(username, password):
+
+    # conn = mysql.connector.connect(
+    #     host="localhost",
+    #     user="root",
+    #     password="adi1416",
+    #     database="timetablemanager"
+    # )
+
+    query = f"""
+            INSERT INTO admin (username, password, role) VALUES
+            ('{username}','{password}', 'admin');')"""
+    # print("SQL Query:", query)
+
+    cursor.execute(query)
+    conn.commit()
+    st.success("Student added successfully!")
+
+
 def main():
     st.set_page_config(layout="wide")
 
@@ -681,8 +703,11 @@ def main():
 
         if st.button("Signup"):
             if secret_code == "secret":
+
+                # print("SQL Query:", query)
+                signup(username, password)
                 st.success("Signup successful! You can now login.")
-                time.sleep(0.5)
+
                 st.session_state.signup_page = False
                 st.session_state.logged_in = False
 
