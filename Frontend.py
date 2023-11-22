@@ -186,21 +186,26 @@ def upload_timeslot():
     df.loc[0] = [1, 'CS101', '5A', 'CS101', 'Monday', '09:00:00', '10:00:00']
     df.loc[1] = [2, 'CS102', '5A', 'CS102', 'Monday', '10:00:00', '11:00:00']
 
-    st.dataframe(df)
-    uploaded_file = st.file_uploader("Choose a file")
+    # upload teaches csv of teaches
+    # uploaded_teaches_file = st.file_uploader("upload teaches a file")
+    # st.dataframe(df)
+    uploaded_file = st.file_uploader("upload timeslot a file")
+
+
     if uploaded_file is not None:
-        df = pd.read_csv(uploaded_file)
-        # print(df)
-        
+        dft = pd.read_csv(uploaded_file)
         # INSERT INTO Timeslot (slot_id, room_id, batch_id, subjectcode, day, starttime, endtime) VALUES
-        
-        for index, row in df.iterrows():
-            # print(row['slot_id'], row['room_id'], row['batch_id'], row['subjectcode'], row['day'], row['starttime'], row['endtime'])
-            query = f"INSERT INTO Timeslot VALUES ({row['slot_id']}, '{row['room_id']}', '{row['batch_id']}', '{row['subjectcode']}', '{row['day']}', '{row['starttime']}', '{row['endtime']}')"
-            # print("SQL Query:", query)
-            cursor.execute(query)
-            conn.commit()
-        st.success("Timeslot added successfully!")      
+        if st.button("upload") :
+            for index, row in dft.iterrows():
+                    query = f"INSERT INTO Timeslot VALUES ({row['slot_id']}, '{row['room_id']}', '{row['batch_id']}', '{row['subjectcode']}', '{row['day']}', '{row['starttime']}', '{row['endtime']}')"
+                    # print("SQL Query:", query)
+                    query1 = f"INSERT INTO updatedtables VALUES ({row['slot_id']}, '{row['room_id']}', '{row['batch_id']}', '{row['subjectcode']}', '{row['day']}', '{row['starttime']}', '{row['endtime']}')"
+
+                    cursor.execute(query)
+                    conn.commit()
+                    cursor.execute(query1)
+                    conn.commit()
+            st.success("Timeslot added successfully!")      
 
 
 def edit_students():
