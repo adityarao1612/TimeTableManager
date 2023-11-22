@@ -24,8 +24,7 @@ cursor = conn.cursor()
 
 # check admin username and password:
 def authenticate(username, password):
-    query = f"SELECT * FROM admin WHERE username = '{
-        username}' AND password = '{password}'"
+    query = f"SELECT * FROM admin WHERE username = '{username}' AND password = '{password}'"
     cursor.execute(query)
     result = cursor.fetchone()
     return result is not None
@@ -36,12 +35,8 @@ def admin_dashboard():
     st.write("Welcome,", st.session_state.user[0])
 
     # Add buttons
-    # selected_option = st.radio("Select an option:", [
-    #                            "Edit Student", "Edit Teacher", "Edit Subject", "Edit Room", "Edit Timeslot", "Edit Batch", "Generate timetable"])
-
-    # Add buttons
     selected_option = st.radio("Select an option:", [
-                               "Edit Student", "Edit Teacher"])
+                               "Edit Student", "Edit Teacher","upload timetable"])
 
     if selected_option == "Edit Student":
         edit_students()
@@ -49,11 +44,8 @@ def admin_dashboard():
     elif selected_option == "Edit Teacher":
         edit_teachers()
 
-    elif selected_option == "Edit Subject":
-        edit_subjects()
-
-    elif selected_option == "Generate timetable":
-        generate_timetable()
+    elif selected_option == "upload timetable":
+        upload_timetable()
 
     if st.button("Logout", key="logout", on_click=lambda: st.rerun()):
         st.session_state.logged_in = False
@@ -61,8 +53,154 @@ def admin_dashboard():
         st.rerun()
 
 
-def generate_timetable():
-    pass
+def upload_timetable():
+    st.title("Upload Timetable")
+    st.write("Welcome,", st.session_state.user[0])
+
+    # Add buttons
+    selected_option = st.radio("Select an option:", [
+                               "Upload Student", "Upload Teacher", "Upload Subject", "Upload Room", "Upload Timeslot"])
+
+    if selected_option == "Upload Student":
+        upload_student()
+
+    elif selected_option == "Upload Teacher":
+        upload_teacher()
+
+    elif selected_option == "Upload Subject":
+        upload_subject()
+
+    elif selected_option == "Upload Room":
+        upload_room()
+
+    elif selected_option == "Upload Timeslot":
+        upload_timeslot()
+
+
+
+def upload_student():
+    # upload csv file which contains student details
+    st.title("Upload Student")
+    st.write("Welcome,", st.session_state.user[0])
+
+    # display example format df as in csv
+    df = pd.DataFrame(columns=['studentid', 'name', 'semester', 'section', 'batchid'])
+    df.loc[0] = ['1BM18CS001', 'Aditya', 5, 'A', '5A']
+    df.loc[1] = ['1BM18CS002', 'Ajey', 5, 'A', '5A']
+
+    st.dataframe(df)
+    # upload csv file
+    uploaded_file = st.file_uploader("Choose a file")
+    if uploaded_file is not None:
+        df = pd.read_csv(uploaded_file)
+        # print(df)
+        for index, row in df.iterrows():
+            # print(row['studentid'], row['name'], row['semester'], row['section'], row['batchid'])
+            query = f"INSERT INTO Student VALUES ('{row['studentid']}', '{row['name']}', {row['semester']}, '{row['section']}', '{row['batchid']}')"
+            # print("SQL Query:", query)
+            cursor.execute(query)
+            conn.commit()
+        st.success("Student added successfully!")
+
+def upload_teacher():
+    # upload csv file which contains teacher details
+    st.title("Upload Teacher")
+    st.write("Welcome,", st.session_state.user[0])
+
+    # display example format df as in csv
+    df = pd.DataFrame(columns=['teacherid', 'name', 'dept', 'email'])
+    df.loc[0] = ['1BM18CS001', 'Aditya', 'CSE', 'abc@gmail.com']
+    
+    st.dataframe(df)
+    uploaded_file = st.file_uploader("Choose a file")
+    if uploaded_file is not None:
+        df = pd.read_csv(uploaded_file)
+        # print(df)
+        for index, row in df.iterrows():
+            # print(row['teacherid'], row['name'], row['dept'], row['email'])
+            query = f"INSERT INTO Teacher VALUES ('{row['teacherid']}', '{row['name']}', '{row['dept']}', '{row['email']}')"
+            # print("SQL Query:", query)
+            cursor.execute(query)
+            conn.commit()
+        st.success("Teacher added successfully!")
+
+def upload_subject():
+    # upload csv file which contains subject details
+    st.title("Upload Subject")
+    st.write("Welcome,", st.session_state.user[0])
+    # display example format df as in csv
+    df = pd.DataFrame(columns=['subjectcode', 'subjectname', 'semester'])
+    df.loc[0] = ['CS101', 'Computer Science', 5]
+    df.loc[1] = ['CS102', 'Computer Science', 5]
+
+    st.dataframe(df)
+
+    uploaded_file = st.file_uploader("Choose a file")
+    if uploaded_file is not None:
+        df = pd.read_csv(uploaded_file)
+        # print(df)
+        # NSERT INTO Subject (subjectcode, subjectname, semester
+        for index, row in df.iterrows():
+            # print(row['subjectcode'], row['subjectname'], row['semester'])
+            query = f"INSERT INTO Subject VALUES ('{row['subjectcode']}', '{row['subjectname']}', {row['semester']})"
+            # print("SQL Query:", query)
+            cursor.execute(query)
+            conn.commit()
+
+        st.success("Subject added successfully!")
+
+def upload_room():
+    # upload csv file which contains room details
+    st.title("Upload Room")
+    st.write("Welcome,", st.session_state.user[0])
+
+    # display example format df as in csv
+    df = pd.DataFrame(columns=['room_id', 'capacity'])
+    df.loc[0] = ['CS101', 40]
+    df.loc[1] = ['CS102', 40]
+
+    st.dataframe(df)
+
+    uploaded_file = st.file_uploader("Choose a file")
+    if uploaded_file is not None:
+        df = pd.read_csv(uploaded_file)
+        # print(df)
+        # INSERT INTO Classroom (room_id, capacity) VALUES
+        for index, row in df.iterrows():
+            # print(row['room_id'], row['capacity'])
+            query = f"INSERT INTO Classroom VALUES ('{row['room_id']}', {row['capacity']})"
+            # print("SQL Query:", query)
+            cursor.execute(query)
+            conn.commit()
+
+        st.success("Room added successfully!")
+
+
+def upload_timeslot():
+    # upload csv file which contains timeslot details
+    st.title("Upload Timeslot")
+    st.write("Welcome,", st.session_state.user[0])
+
+    # display example format df as in csv
+    df = pd.DataFrame(columns=['slot_id', 'room_id', 'batch_id', 'subjectcode', 'day', 'starttime', 'endtime'])
+    df.loc[0] = [1, 'CS101', '5A', 'CS101', 'Monday', '09:00:00', '10:00:00']
+    df.loc[1] = [2, 'CS102', '5A', 'CS102', 'Monday', '10:00:00', '11:00:00']
+
+    st.dataframe(df)
+    uploaded_file = st.file_uploader("Choose a file")
+    if uploaded_file is not None:
+        df = pd.read_csv(uploaded_file)
+        # print(df)
+        
+        # INSERT INTO Timeslot (slot_id, room_id, batch_id, subjectcode, day, starttime, endtime) VALUES
+        
+        for index, row in df.iterrows():
+            # print(row['slot_id'], row['room_id'], row['batch_id'], row['subjectcode'], row['day'], row['starttime'], row['endtime'])
+            query = f"INSERT INTO Timeslot VALUES ({row['slot_id']}, '{row['room_id']}', '{row['batch_id']}', '{row['subjectcode']}', '{row['day']}', '{row['starttime']}', '{row['endtime']}')"
+            # print("SQL Query:", query)
+            cursor.execute(query)
+            conn.commit()
+        st.success("Timeslot added successfully!")      
 
 
 def edit_students():
@@ -113,8 +251,7 @@ def add_student():
 
     if st.button("Add Student"):
         try:
-            query = f"INSERT INTO Student VALUES ('{id}', '{name}', {semester}, '{
-                section}', '{batchid}')"
+            query = f"INSERT INTO Student VALUES ('{id}', '{name}', {semester}, '{section}', '{batchid}')"
             print("SQL Query:", query)
 
             cursor.execute(query)
@@ -149,8 +286,7 @@ def update_student():
     batchid = st.text_input("Batch ID")
     try:
         if st.button("Update Student"):
-            query = f"UPDATE Student SET name = '{
-                name}',semester={int(batchid[0])},section='{batchid[1]}', batchid = '{batchid}' WHERE studentid = '{rollno}'"
+            query = f"UPDATE Student SET name = '{name}',semester={int(batchid[0])},section='{batchid[1]}', batchid = '{batchid}' WHERE studentid = '{rollno}'"
             cursor.execute(query)
             conn.commit()
             st.success("Student updated successfully!")
@@ -263,8 +399,7 @@ def process_leave(teacher_id, wday):
     cursor.execute(insert_leave_query)
     conn.commit()
 
-    st.success(f"Leave for Teacher {teacher_id} on {
-               wday} processed successfully.")
+    st.success(f"Leave for Teacher {teacher_id} on {wday} processed successfully.")
 
 
 def process_leave_deletion(teacher_id, wday):
@@ -276,8 +411,7 @@ def process_leave_deletion(teacher_id, wday):
     cursor.execute(delete_leave_query)
     conn.commit()
 
-    st.success(f"Leave deletion for Teacher {teacher_id} on {
-               wday} processed successfully.")
+    st.success(f"Leave deletion for Teacher {teacher_id} on {wday} processed successfully.")
 
 
 def display_teachers_on_leave():
@@ -305,8 +439,7 @@ def add_teacher():
 
     if st.button("Add Teacher"):
         try:
-            query = f"INSERT INTO Teacher VALUES ('{teacher_id}', '{name}', '{
-                department}', '{email}')"
+            query = f"INSERT INTO Teacher VALUES ('{teacher_id}', '{name}', '{department}', '{email}')"
 
             cursor.execute(query)
             conn.commit()
@@ -347,8 +480,7 @@ def update_teacher():
 
     if st.button("Update Teacher"):
         try:
-            query = f"UPDATE Teacher SET name = '{name}',dept = '{
-                department}', email '{email}' WHERE teacherid = '{teacher_id}')"
+            query = f"UPDATE Teacher SET name = '{name}',dept = '{department}', email '{email}' WHERE teacherid = '{teacher_id}')"
             cursor.execute(query)
             conn.commit()
             st.success("Teacher updated successfully!")
@@ -372,8 +504,7 @@ def view_teacher():
                               'teacherid', 'name', 'dept', 'email'])
             st.dataframe(df, hide_index=True)
             # group by:
-            query = f"SELECT teacherid,count(*) FROM Teaches group by teacherid having teacherid = '{
-                teacher_id}'"
+            query = f"SELECT teacherid,count(*) FROM Teaches group by teacherid having teacherid = '{teacher_id}'"
             cursor.execute(query)
             result = cursor.fetchone()
 
@@ -387,24 +518,6 @@ def view_teacher():
             st.error("No entry found.")
 
 
-def edit_subjects():
-    st.subheader("Edit Subjects")
-    # Add functionality to edit subject information in the database
-    # You can use st.text_input, st.button, and other Streamlit components to create the form
-
-
-def edit_rooms():
-    st.subheader("Edit Rooms")
-    # Add functionality to edit room information in the database
-    # You can use st.text_input, st.button, and other Streamlit components to create the form
-
-
-def edit_timeslots():
-    st.subheader("Edit Timeslots")
-    # Add functionality to edit timeslot information in the database
-    # You can use st.text_input, st.button, and other Streamlit components to create the form
-
-
 def edit_batches():
     st.subheader("Edit Batches")
     # Add functionality to edit batch information in the database
@@ -412,98 +525,254 @@ def edit_batches():
 
 
 def view_timetable():
-    st.title("View TimeTable")
-    uid = st.text_input("Enter Student ID or BatchID")
-    if uid:
-        st.session_state.timetable_id = uid
-    if st.session_state.timetable_id:
-        st.write("Timetable for ", st.session_state.timetable_id)
 
-    batch = False
-    # Original Timetable Query
+    if st.session_state.logged_in:
+        # display all tables
+        st.title("View Tables")
+        # radio button to select table
+        selected_option = st.radio("Select Table", [
+                                   "Student", "Teacher", "Subject", "Room", "Timetable"])
+        
+        if selected_option == "Student":
+            student_details()
 
-    if len(st.session_state.timetable_id) > 12:
-        original_query = f"""
-            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
-            FROM timeslot t
-            JOIN subject s ON t.subjectcode = s.subjectcode
-            WHERE t.batch_id IN
-            (SELECT batchid FROM Student WHERE studentid = '{st.session_state.timetable_id}')
-        """
-    elif len(st.session_state.timetable_id) > 10:
-        original_query = f"""
-            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
-            FROM (SELECT * FROM timeslot
-            NATURAL JOIN teaches
-            WHERE timeslot.subjectcode = teaches.subjectcode
-            AND batchid = batch_id AND teacherid='{st.session_state.timetable_id}') AS t
-            NATURAL JOIN subject s
-            WHERE t.subjectcode = s.subjectcode
-        """
+        
+        elif selected_option == "Teacher":
+            # add drop down menu box for batch
+            
+            # display student table according to batch
+            query = f"SELECT * FROM Teacher"
+            cursor.execute(query)
+            result = cursor.fetchall()
+            df = pd.DataFrame(result, columns=[ 'teacherid', 'name', 'dept', 'email'])
+            st.dataframe(df, hide_index=True)
+
+        elif selected_option == "Subject":
+            # add drop down menu box for batch
+            
+            # display student table according to batch
+            query = f"SELECT * FROM Subject"
+            cursor.execute(query)
+            result = cursor.fetchall()
+            df = pd.DataFrame(result, columns=[ 'subjectcode', 'subjectname', 'semester'])
+            st.dataframe(df, hide_index=True)
+
+        elif selected_option == "Room":
+            # add drop down menu box for batch
+            
+            # display student table according to batch
+            query = f"SELECT * FROM Classroom"
+            cursor.execute(query)
+            result = cursor.fetchall()
+            df = pd.DataFrame(result, columns=[ 'room_id', 'capacity'])
+            st.dataframe(df, hide_index=True)
+
+        elif selected_option == "Timetable":
+            
+            uid = st.text_input("Enter Student ID or BatchID")
+            if uid:
+                st.session_state.timetable_id = uid
+            if st.session_state.timetable_id:
+                st.write("Timetable for ", st.session_state.timetable_id)
+
+            batch = False
+            # Original Timetable Query
+
+            if len(st.session_state.timetable_id) > 12:
+                original_query = f"""
+                    SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+                    FROM timeslot t
+                    JOIN subject s ON t.subjectcode = s.subjectcode
+                    WHERE t.batch_id IN
+                    (SELECT batchid FROM Student WHERE studentid = '{st.session_state.timetable_id}')
+                """
+            elif len(st.session_state.timetable_id) > 10:
+                original_query = f"""
+                    SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+                    FROM (SELECT * FROM timeslot
+                    NATURAL JOIN teaches
+                    WHERE timeslot.subjectcode = teaches.subjectcode
+                    AND batchid = batch_id AND teacherid='{st.session_state.timetable_id}') AS t
+                    NATURAL JOIN subject s
+                    WHERE t.subjectcode = s.subjectcode
+                """
+            else:
+                original_query = f"""
+                    SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+                    FROM timeslot t
+                    JOIN subject s ON t.subjectcode = s.subjectcode
+                    WHERE t.batch_id = '{st.session_state.timetable_id}'
+
+                """
+                batch = st.session_state.timetable_id
+
+            cursor.execute(original_query)
+            original_result = cursor.fetchall()
+            updated_result = 0
+
+            # Updated Timetable Query
+
+            if len(st.session_state.timetable_id) > 12:
+                updated_query = f"""
+                    SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+                    FROM UpdatedTables
+                    JOIN subject s ON t.subjectcode = s.subjectcode
+                    WHERE t.batch_id IN
+                    (SELECT batchid FROM Student WHERE studentid = '{st.session_state.timetable_id}')
+                """
+
+            # NESTED AND JOIN
+            elif len(st.session_state.timetable_id) > 10:
+                updated_query = f"""
+                    SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+                    FROM (SELECT * FROM UpdatedTables
+                    NATURAL JOIN teaches
+                    WHERE UpdatedTables.subjectcode = teaches.subjectcode
+                    AND batchid = batch_id AND teacherid='{st.session_state.timetable_id}') AS t
+                    NATURAL JOIN subject s
+                    WHERE t.subjectcode = s.subjectcode
+                """
+            else:
+                updated_query = f"""
+                    SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+                    FROM UpdatedTables t
+                    JOIN subject s ON t.subjectcode = s.subjectcode
+                    WHERE t.batch_id = '{st.session_state.timetable_id}'
+                """
+
+                cursor.execute(updated_query)
+                updated_result = cursor.fetchall()
+                print(updated_result)
+            if original_result or updated_result:
+                st.write("Original Timetable:")
+                updt = display_timetable(original_result, batch, "original")
+                if updated_result:
+                    st.write("\n Updated Timetable:")
+                    updt = display_timetable(updated_result, batch, "updated")
+                    # updt = display_timetable(original_result, batch)
+
+                if st.button("update"):
+                    print("\n\n\n\n\n-------\n\n\n")
+                    # print(updt)
+                    update_table(updt, batch)
+
+            else:
+                st.error("No entry found.")
+
+
+
     else:
-        original_query = f"""
-            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
-            FROM timeslot t
-            JOIN subject s ON t.subjectcode = s.subjectcode
-            WHERE t.batch_id = '{st.session_state.timetable_id}'
+        st.title("View TimeTable")
+            
+        uid = st.text_input("Enter Student ID or BatchID")
+        if uid:
+            st.session_state.timetable_id = uid
+        if st.session_state.timetable_id:
+            st.write("Timetable for ", st.session_state.timetable_id)
 
-        """
-        batch = st.session_state.timetable_id
+        batch = False
+        # Original Timetable Query
 
-    cursor.execute(original_query)
-    original_result = cursor.fetchall()
-    updated_result = 0
+        if len(st.session_state.timetable_id) > 12:
+            original_query = f"""
+                SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+                FROM timeslot t
+                JOIN subject s ON t.subjectcode = s.subjectcode
+                WHERE t.batch_id IN
+                (SELECT batchid FROM Student WHERE studentid = '{st.session_state.timetable_id}')
+            """
+        elif len(st.session_state.timetable_id) > 10:
+            original_query = f"""
+                SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+                FROM (SELECT * FROM timeslot
+                NATURAL JOIN teaches
+                WHERE timeslot.subjectcode = teaches.subjectcode
+                AND batchid = batch_id AND teacherid='{st.session_state.timetable_id}') AS t
+                NATURAL JOIN subject s
+                WHERE t.subjectcode = s.subjectcode
+            """
+        else:
+            original_query = f"""
+                SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+                FROM timeslot t
+                JOIN subject s ON t.subjectcode = s.subjectcode
+                WHERE t.batch_id = '{st.session_state.timetable_id}'
 
-    # Updated Timetable Query
+            """
+            batch = st.session_state.timetable_id
 
-    if len(st.session_state.timetable_id) > 12:
-        updated_query = f"""
-            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
-            FROM UpdatedTables
-            JOIN subject s ON t.subjectcode = s.subjectcode
-            WHERE t.batch_id IN
-            (SELECT batchid FROM Student WHERE studentid = '{st.session_state.timetable_id}')
-        """
+        cursor.execute(original_query)
+        original_result = cursor.fetchall()
+        updated_result = 0
 
-    # NESTED AND JOIN
-    elif len(st.session_state.timetable_id) > 10:
-        updated_query = f"""
-            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
-            FROM (SELECT * FROM UpdatedTables
-            NATURAL JOIN teaches
-            WHERE UpdatedTables.subjectcode = teaches.subjectcode
-            AND batchid = batch_id AND teacherid='{st.session_state.timetable_id}') AS t
-            NATURAL JOIN subject s
-            WHERE t.subjectcode = s.subjectcode
-        """
-    else:
-        updated_query = f"""
-            SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
-            FROM UpdatedTables t
-            JOIN subject s ON t.subjectcode = s.subjectcode
-            WHERE t.batch_id = '{st.session_state.timetable_id}'
-        """
+        # Updated Timetable Query
 
-        cursor.execute(updated_query)
-        updated_result = cursor.fetchall()
-        print(updated_result)
-    if original_result or updated_result:
-        st.write("Original Timetable:")
-        updt = display_timetable(original_result, batch, "original")
-        if updated_result:
-            st.write("\n Updated Timetable:")
-            updt = display_timetable(updated_result, batch, "updated")
-            # updt = display_timetable(original_result, batch)
+        if len(st.session_state.timetable_id) > 12:
+            updated_query = f"""
+                SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+                FROM UpdatedTables
+                JOIN subject s ON t.subjectcode = s.subjectcode
+                WHERE t.batch_id IN
+                (SELECT batchid FROM Student WHERE studentid = '{st.session_state.timetable_id}')
+            """
 
-        if st.button("update"):
-            print("\n\n\n\n\n-------\n\n\n")
-            # print(updt)
-            update_table(updt, batch)
+        # NESTED AND JOIN
+        elif len(st.session_state.timetable_id) > 10:
+            updated_query = f"""
+                SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+                FROM (SELECT * FROM UpdatedTables
+                NATURAL JOIN teaches
+                WHERE UpdatedTables.subjectcode = teaches.subjectcode
+                AND batchid = batch_id AND teacherid='{st.session_state.timetable_id}') AS t
+                NATURAL JOIN subject s
+                WHERE t.subjectcode = s.subjectcode
+            """
+        else:
+            updated_query = f"""
+                SELECT t.day, t.starttime, t.endtime, t.subjectcode, t.room_id, s.subjectname, t.batch_id
+                FROM UpdatedTables t
+                JOIN subject s ON t.subjectcode = s.subjectcode
+                WHERE t.batch_id = '{st.session_state.timetable_id}'
+            """
 
-    else:
-        st.error("No entry found.")
+            cursor.execute(updated_query)
+            updated_result = cursor.fetchall()
+            print(updated_result)
+        if original_result or updated_result:
+            st.write("Original Timetable:")
+            updt = display_timetable(original_result, batch, "original")
+            if updated_result:
+                st.write("\n Updated Timetable:")
+                updt = display_timetable(updated_result, batch, "updated")
+                # updt = display_timetable(original_result, batch)
+
+            if st.button("update"):
+                print("\n\n\n\n\n-------\n\n\n")
+                # print(updt)
+                update_table(updt, batch)
+
+        else:
+            st.error("No entry found.")
 
 
+    
+
+def student_details():
+    # add drop down menu box for batch
+            batches = st.selectbox("Select Batch", [
+                                 "5A", "5B", "5C", "5D", "5E", "5F"])
+            
+            # display student table according to batch
+            query = f"SELECT * FROM Student WHERE batchid = '{batches}'"
+            cursor.execute(query)
+            result = cursor.fetchall()
+            df = pd.DataFrame(result, columns=[
+                              'studentid', 'studentname', 'semester', 'section', 'batchid'])
+            st.dataframe(df, hide_index=True)
+ 
+
+
+ 
 def update_table(updated_vals, batchid):
     #     # Assuming updated_vals is a list of dictionaries
     #     # Example: [{'day': 'Monday', 'timing': '09:00-10:00', 'alloted': 'Subject [Room] (Batch)'}]
