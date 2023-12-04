@@ -915,6 +915,7 @@ def display_timetable(result, batch, s):
     # Increase row height using custom CSS
     if not st.session_state.logged_in:
         st.dataframe(timetable, hide_index=True)
+
     else:
         updated_vals = st.data_editor(
             timetable, key='data_editor'+s, hide_index=True)
